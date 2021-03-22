@@ -10,3 +10,5 @@ services:
       - type: bind
         source: ${PWD}/
         target: /var/local/app/
+    ports:
+      - 8080:8080
