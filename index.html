@@ -1,11 +1,23 @@
 <!doctype html>
 <html lang="ja">
 <head>
+    <link rel="manifest" href="./manifest.json">
     <title>Markdown Editor</title>
     <meta charset="utf-8"/>
 </head>
 <body>
 <div id="app"></div>
 <script src="./dist/index.js"></script>
+<script type="text/javascript">
+    if ('serviceWorker' in navigator) { // ブラウザにサービスワーカーが実装されているか
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').then((registration) => {
+                console.log('登録成功：ServiceWorker registration successful with scope: ', registration.scope)
+            }, (err) => {
+                console.log('登録失敗：ServiceWorker registration failed: ', err)
+            })
+        })
+    }
+</script>
 </body>
 </html>
