@@ -1,14 +1,18 @@
 import * as React from 'react'
 import styled from 'styled-components'
 import {useStateWithStorage} from '../hooks/use_state_with_storage'
-import * as ReactMarkdown from 'react-markdown'
 import {putMemo} from '../indexeddb/memos'
 import {Button} from '../components/button'
 import {SaveModal} from '../components/save_modal'
 import {Link} from 'react-router-dom'
 import {Header} from '../components/header'
 
-const {useState} = React
+//これは src/worker/test.ts の型定義と合わせて、読み込むファイルが Worker であることを示している
+//こうすると worker-loader が Worker として適切に処理
+import ConvertMarkdownWorker from 'worker-loader!../worker/convert_markdown_worker'
+
+const convertMarkdownWorker = new ConvertMarkdownWorker()
+const {useState, useEffect} = React
 
 const Wrapper = styled.div`
   bottom: 0;
@@ -49,6 +53,7 @@ const Preview = styled.div`
 `
 
 const StorageKey = 'pages/editor:text'
+
 interface Props {
     text: string
     setText: (text: string) => void
@@ -57,6 +62,21 @@ interface Props {
 export const Editor: React.FC<Props> = (props) => {
     const {text, setText} = props
     const [showModal, setShowModal] = useState(false)
+    const [html, setHtml] = useState('')
+
+    // useEffectの利用
+    // Workerから結果を受け取る関数
+    useEffect(() => {
+        convertMarkdownWorker.onmessage = (event) => {
+            setHtml(event.data.html)
+        }
+    }, [])
+
+    // useEffectの利用2
+    // テキストの変更時に Worker へテキストデータを送信
+    useEffect(() => {
+        convertMarkdownWorker.postMessage(text)
+    }, [text])
 
     return (
         <>
@@ -76,7 +96,7 @@ export const Editor: React.FC<Props> = (props) => {
                     value={text}
                 />
                 <Preview>
-                    <ReactMarkdown source={text}/>
+                    <div dangerouslySetInnerHTML={{ __html: html}} />
                 </Preview>
             </Wrapper>
             {showModal && (
